@@ -1,0 +1,96 @@
+DOS头：共40H(64字节)
+    //注释掉的不需要重点分析
+    struct _IMAGE_DOS_HEADER{
+        0X00 WORD e_magic;      //※Magic DOS signature MZ(4Dh 5Ah):MZ标记:用于标记是否是可执行文件
+        //0X02 WORD e_cblp;     //Bytes on last page of file
+        //0X04 WORD e_cp;       //Pages in file
+        //0X06 WORD e_crlc;     //Relocations
+        //0X08 WORD e_cparhdr;  //Size of header in paragraphs
+        //0X0A WORD e_minalloc; //Minimun extra paragraphs needs
+        //0X0C WORD e_maxalloc; //Maximun extra paragraphs needs
+        //0X0E WORD e_ss;       //intial(relative)SS value
+        //0X10 WORD e_sp;       //intial SP value
+        //0X12 WORD e_csum;     //Checksum
+        //0X14 WORD e_ip;       //intial IP value
+        //0X16 WORD e_cs;       //intial(relative)CS value
+        //0X18 WORD e_lfarlc;   //File Address of relocation table
+        //0X1A WORD e_ovno;     //Overlay number
+        //0x1C WORD e_res[4];   //Reserved words
+        //0x24 WORD e_oemid;    //OEM identifier(for e_oeminfo)
+        //0x26 WORD e_oeminfo;  //OEM information;e_oemid specific
+        //0x28 WORD e_res2[10]; //Reserved words
+        0x3C DWORD e_lfanew;    //※Offset to start of PE header:定位PE文件，PE头相对于文件的偏移量
+    };
+
+PE头
+    //NT头
+    //pNTHeader = dosHeader + dosHeader->e_lfanew;
+    struct _IMAGE_NT_HEADERS{
+        0x00 DWORD Signature;                       //PE文件标识:ASCII的"PE\0\0"
+        0x04 _IMAGE_FILE_HEADER FileHeader;         //标准PE头 20B
+        0x18 _IMAGE_OPTIONAL_HEADER OptionalHeader; //可选PE头 F0H=240B 或 E0H=224B
+    };
+        //标准PE头:最基础的文件信息，共20字节
+        struct _IMAGE_FILE_HEADER{
+            0x00 WORD Machine;                  //※程序执行的CPU平台:0X0:任何平台，0X14C:intel i386及后续处理器
+            0x02 WORD NumberOfSections;         //※PE文件中区块数量
+            0x04 DWORD TimeDateStamp;           //时间戳：连接器产生此文件的时间距1969/12/31-16:00P:00的总秒数
+            //0x08 DWORD PointerToSymbolTable;  //COFF符号表格的偏移位置。此字段只对COFF除错信息有用
+            //0x0c DWORD NumberOfSymbols;       //COFF符号表格中的符号个数。该值和上一个值在release版本的程序里为0，每个符号记录占18B
+            //0x10 WORD SizeOfOptionalHeader;   //IMAGE_OPTIONAL_HEADER结构的大小(字节数):32位默认E0H=224B,64位默认F0H=240B(可修改)
+            0x12 WORD Characteristics;          //※描述文件属性,eg:
+                                                //单属性(只有1bit为1)：#define IMAGE_FILE_DLL 0x2000  //File is a DLL.
+                                                //组合属性(多个bit为1，单属性或运算):0X010F 可执行文件
+        };
+        //可选PE头
+        struct _IMAGE_OPTIONAL_HEADER{
+            0x00 WORD Magic;                    //※幻数(魔数)，0x0107:ROM image,0x010B:32位PE，0X020B:64位PE
+            //0x02 BYTE MajorLinkerVersion;     //用于标识生成该文件的链接器主版本号
+            //0x03 BYTE MinorLinkerVersion;     //用于标识生成该文件的链接器副版本号
+            0x04 DWORD SizeOfCode;              //所有代码段的总和大小,注意：必须是FileAlignment的整数倍,存在但没用
+            0x08 DWORD SizeOfInitializedData;   //已经初始化数据的大小,注意：必须是FileAlignment的整数倍,存在但没用
+            0x0c DWORD SizeOfUninitializedData; //未经初始化数据的大小,注意：必须是FileAlignment的整数倍,存在但没用
+
+            //原始程序入口点 (EP是入口点)
+            0x10 DWORD AddressOfEntryPoint;     //※程序入口地址OEP，这是一个RVA(Relative Virtual Address),通常会落在.textsection,此字段对于DLLs/EXEs都适用。
+
+            0x14 DWORD BaseOfCode;              //代码段起始地址(代码基址),(代码的开始和程序无必然联系)
+            0x18 DWORD BaseOfData;              //数据段起始地址(数据基址)
+
+            0x1c DWORD ImageBase;               //※内存镜像基址(默认装入起始地址),默认为4000H
+
+            0x20 DWORD SectionAlignment;        //※内存对齐:一旦映像到内存中，每一个section保证从一个「此值之倍数」的虚拟地址开始
+            0x24 DWORD FileAlignment;           //※文件对齐：最初是200H，现在是1000H
+            //0x28 WORD MajorOperatingSystemVersion;    //所需操作系统主版本号
+            //0x2a WORD MinorOperatingSystemVersion;    //所需操作系统副版本号
+            //0x2c WORD MajorImageVersion;              //自定义主版本号,使用连接器的参数设置,eg:LINK /VERSION:2.0 myobj.obj
+            //0x2e WORD MinorImageVersion;              //自定义副版本号,使用连接器的参数设置
+            //0x30 WORD MajorSubsystemVersion;          //所需子系统主版本号,典型数值4.0(Windows 4.0/即Windows 95)
+            //0x32 WORD MinorSubsystemVersion;          //所需子系统副版本号
+            //0x34 DWORD Win32VersionValue;             //总是0
+            0x38 DWORD SizeOfImage;         //※PE文件在内存中映像总大小,sizeof(ImageBuffer),SectionAlignment的倍数
+            0x3c DWORD SizeOfHeaders;       //※DOS头(64B)+PE标记(4B)+标准PE头(20B)+可选PE头+节表的总大小，按照文件对齐(FileAlignment的倍数)
+            0x40 DWORD CheckSum;            //PE文件CRC校验和，判断文件是否被修改
+            //0x44 WORD Subsystem;          //用户界面使用的子系统类型
+            //0x46 WORD DllCharacteristics;   //总是0
+            0x48 DWORD SizeOfStackReserve;  //默认线程初始化栈的保留大小
+            0x4c DWORD SizeOfStackCommit;   //初始化时实际提交的线程栈大小
+            0x50 DWORD SizeOfHeapReserve;   //默认保留给初始化的process heap的虚拟内存大小
+            0x54 DWORD SizeOfHeapCommit;    //初始化时实际提交的process heap大小
+            //0x58 DWORD LoaderFlags;       //总是0
+            0x5c DWORD NumberOfRvaAndSizes; //目录项数目：总为0X00000010H(16)
+
+            //数据目录表
+            //占用大小：16*8 = 128Byte = 80H = E0H(可选PE头默认大小) - 60H(前面所有成员固定占用大小)
+            0x60 _IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];//#define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
+        };
+            //数据目录表项
+            //占用大小：8Byte
+            //导出表、导入表、资源表、异常处理表、安全表、重定位表、调试表、版权、指针目录、TLS、载入配置、绑定输入目录、导入地址表、延迟载入、COM信息
+            struct _IMAGE_DATA_DIRECTORY{
+               DWORD   VirtualAddress;
+               DWORD   Size;
+            };
+
+
+

@@ -1,0 +1,136 @@
+无壳代码和有壳代码的特征
+    入口点代码 程序区段 加载模块
+可执行文件格式
+    1.PE（Portable Executable）
+        用途：主要用于Windows操作系统。
+        特点：包含了执行代码、数据段、资源、导入和导出表等。
+        文件扩展名：.exe, .dll, .sys
+    2. ELF（Executable and Linkable Format）
+        用途：广泛用于Linux和Unix-like操作系统。
+        特点：模块化设计，支持动态链接库（.so文件）。
+        文件扩展名：通常没有特定扩展名，动态库使用.so
+    3. a.out（Assembler Output）
+        用途：最早期的Unix系统可执行文件格式。
+        特点：简单、直接，但功能有限。
+PE(主要)
+    PE头 .text .rdata .data .rsrc .reloc
+    .reloc: 重定位信息,由多个重定位块组成,每个重定位块包含一组需要重定位的地址
+        重定位块：
+            Page RVA：
+            Block Size：
+            Relocation Entries：包含多个重定位条目
+                2字节（16位）的值
+                高4位：重定位类型。
+                低12位：重定位偏移，相对于Page RVA
+        具体过程：
+            加载可执行文件或DLL
+            检查是否需要重定位：加载器检查实际加载地址与文件的默认基址。
+            读取.reloc段：
+            计算新地址
+            调整内存地址：加载器根据计算出的新地址，读取需要调整的地址，计算新地址并写回内存
+MMU
+    操作系统内存管理单元
+地址
+    逻辑地址->线性地址->物理地址
+    逻辑地址    段内偏移量
+    线性地址
+    物理地址
+
+实模式
+    所有内存地址可以自由访问，无保护机制。
+    没有权限检查和虚拟内存管理。
+保护模式
+    支持虚拟内存管理，内存分页和页面置换。通过页表实现虚拟地址到物理地址的映射
+    每个段和页有访问权限和属性。
+    支持段式内存管理，段寄存器存储段选择子，段选择子指向段描述符，段描述符包含段基址、段限长和访问权限。
+实模式和保护模式的过度 （实模式->保护模式）
+    BIOS初始化：实模式，执行硬件初始化和启动加载程序。
+    启动加载程序（Bootloader）：实模式，加载操作系统内核。
+    操作系统内核：切换到保护模式，启用分页机制和内存保护。
+
+GDT 全局符号描述表
+    根据段寄存器的段选择子查询段基址
+    GDT主要用于管理物理内存的段描述符，定义和控制各个段的访问权限和特权级别。
+    CPU在访问一个段时，会使用段寄存器中的段选择子作为索引来访问GDT中的段描述符，从而获取段的基址和访问权限等信息。
+LDT 局部符号描述表
+
+
+页目录表
+页表
+    用于将虚拟地址映射到物理地址。每个进程都有自己的页表，用于将虚拟地址转换为物理地址，以实现内存的动态分配和管理。
+段表
+    在典型的x86操作系统中，通常使用GDT来管理所有的段描述符，而不会单独使用一个段表来管理。
+
+
+寄存器x86
+    通用寄存器 32bit
+        EAX (Accumulator Register)  用于算术和逻辑操作，乘法和除法指令中被隐式使用
+        EBX (Base Register)         用于基于基址的地址计算
+        ECX (Count Register)        用于循环和串操作
+        EDX (Data Register)         与EAX一起用于除法和乘法指令
+        ESI (Source Index)          源指针,在串操作(MOVSB, LODSB)中指定源地址
+        EDI (Destination Index)     目标指针,在串操作(如MOVSB,STOSB)中指定目标地址
+        EBP (Base Pointer)          基址指针,用于栈帧指针来访问函数参数和局部变量
+        ESP (Stack Pointer)         栈顶指针，用于栈操作如PUSH和POP
+                        32  16 8     bit
+                        EAX AX AH/AL
+                        EBX BX BH/BL
+                        ECX CX CH/CL
+                        EDX DX DH/DL
+    段寄存器
+        CS (Code Segment)                   代码段寄存器。存储当前正在执行的代码段的选择子。
+        DS (Data Segment)                   数据段寄存器。指向当前数据段。
+        SS (Stack Segment)                  栈段寄存器。指向当前栈段。
+        ES (Extra Segment)                  附加段寄存器。可用于其他数据段的访问。
+        FS (Additional Segment Register)    附加段寄存器。通常用于存储与线程相关的数据。
+        GS (Additional Segment Register)    附加段寄存器。与FS寄存器类似，用于特定的线程或进程相关数据的访问。
+    状态寄存器 16bit
+        EFLAGS
+            CF (Carry Flag)             进位标志。产生了一个进位或借位，则CF被置位
+            PF (Parity Flag)            奇偶标志。低8位中1的个数是偶数，则PF被置位
+            AF (Auxiliary Carry Flag)   辅助进位标志。在BCD运算中使用，如果从低半字节借位或进位到高半字节，则AF被置位
+            ZF (Zero Flag)              零标志。如果运算结果为零，则ZF被置位。
+            SF (Sign Flag)              符号标志。如果运算结果为负数，则SF被置位。
+            TF (Trap Flag)              陷阱标志。TF被置位时，处理器进入单步模式，每执行一条指令产生一个调试异常。
+            DF (Direction Flag)         用于控制字符串操作指令（如MOVS, CMPS）的方向，高地址<->低地址
+            OF (Overflow Flag)          用于表示有符号运算的溢出情况。运算结果超出目标类型的表示范围，则置位。
+            IF (Interrupt Enable Flag)  中断允许标志。
+
+    EIP 指令寄存器
+    TSC 时间错寄存器
+
+
+    浮点寄存器
+        ST(0-7)
+        FST（Floating Point Store）           用于将浮点数从FPU寄存器存储到内存中或另一个寄存器中
+        FCW（Floating Point Control Word）    用于控制FPU的操作模式
+        ERR     标志寄存器，指示x87 FPU在执行浮点运算时发生的错误和异常
+            IE（Invalid Operation Exception）     无效操作异常。
+            DE（Denormalized Operand Exception）  非正规数操作异常。
+            ZE（Zero Divide Exception）           除零异常。
+            OE（Overflow Exception）              溢出异常。
+            UE（Underflow Exception）             下溢异常。
+            PE（Precision Exception）             精度异常。
+        Cond
+        Prec
+            00-单精度24bit
+            10-双精度(53bit)
+            11-拓展精度(64bit)
+
+    MMX寄存器
+        MM(0-7)     MMX寄存器与x87 FPU（浮点单元）的寄存器共享同一组物理寄存器，这意味着MMX寄存器实际上是x87 FPU寄存器的别名。
+                    当处理器执行MMX指令时，FPU寄存器被用作MMX寄存器；当处理器执行FPU指令时，这些寄存器作为FPU寄存器使用。
+    3DNow!寄存器
+        MM(0-7)     与MMX寄存器相同，用于存储多媒体数据。
+        MMX寄存器：通过MM0-MM7的方式进行调用
+
+    MMX 和 3DNow! 寄存器的区别
+        MMX：早期由Intel引入，主要用于在整数领域提供并行处理能力，特别是在图像和视频处理中。
+        3DNow!：由AMD引入，专注于提高浮点运算的效率，特别是在三维图形计算中，例如顶点变换、矩阵运算等。
+
+
+
+
+
+
+

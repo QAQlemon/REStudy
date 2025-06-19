@@ -1,0 +1,10 @@
+^E:\DESKTOP\RE笔记\REDEMO\CMAKE-BUILD-DEBUG-MINGW\CMAKEFILES\CF53E560158400C1B2CA7D28415BB9C1\GENERATE.STAMP.RULE
+setlocal
+"D:\Compiler\CLion\CLion 2023.3.4\bin\cmake\win\x64\bin\cmake.exe" -SE:/Desktop/RE笔记/REDemo -BE:/Desktop/RE笔记/REDemo/cmake-build-debug-mingw --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file E:/Desktop/RE笔记/REDemo/cmake-build-debug-mingw/Project.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

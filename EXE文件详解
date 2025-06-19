@@ -1,0 +1,56 @@
+程序装载过程
+    FileBuffer
+        是磁盘上.exe文件在内存中的一份拷贝，但是FileBuffer无法直接在内存中运行，必须经过PE loader(装载器)装载以后成为ImageBuffer。
+    ImageBuffer
+        ImageBuffer是FileBuffer的”拉伸”。
+
+    即：.exe–>FileBuffer–>ImageBuffer
+
+基本结构
+    DOS header
+        简介：
+
+
+    PE header
+    PE头
+        简介：
+            定义文件的 PE 格式、代码/数据大小、入口点地址等关键信息。
+
+    section table
+    节区头
+        简介：
+            描述每个节区（如 .text、.data）的属性（可读/可写/可执行）
+    Sections
+    节区
+        简介：
+            存储程序的实际代码和数据实际存储代码、数据、资源等（如 .text 存指令，.data 存全局变量）
+PE Viewer
+    IMAGE_DOS_HEADER        DOS 兼容头，确保文件在 DOS 下运行时能提示错误（而非直接崩溃）
+    MS-DOS Stub Program     一段简单的 DOS 程序，通常显示 "This program cannot be run in DOS mode"
+    IMAGE_NT_HEADERS
+        Signature              PE\0\0（0x50450000），标识 PE 文件开始
+        IMAGE_FILE_HEADER
+        IMAGE_OPTIONAL_HEADER
+            AddressOfEntryPoint
+            BaseOfCode
+            BaseOfData
+            ImageBase
+    IMAGE_SECTION_HEADER .text
+    IMAGE_SECTION_HEADER .data
+    IMAGE_SECTION_HEADER .rdata
+    IMAGE_SECTION_HEADER .pdata
+    IMAGE_SECTION_HEADER .xdata
+    IMAGE_SECTION_HEADER .bss
+    IMAGE_SECTION_HEADER .idata
+    IMAGE_SECTION_HEADER .CRT
+    IMAGE_SECTION_HEADER .tls
+    IMAGE_SECTION_HEADER .reloc
+    SECTION .text
+    SECTION .data
+    SECTION .rdata
+    SECTION .pdata
+    SECTION .xdata
+    SECTION .idata
+    SECTION .CRT
+    SECTION .tls
+    SECTION .reloc
