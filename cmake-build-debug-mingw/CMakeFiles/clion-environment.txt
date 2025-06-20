@@ -1,4 +1,0 @@
-ToolSet: 11.0 w64 (local)@D:\Software\MinGW\13.2.0-posix\ucrt\mingw64
-Options: 
-
-Options:
